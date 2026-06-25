@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRANCE DirectReward v3</title>
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0a0b14;
+      --surface:    #111225;
+      --surface2:   #191b30;
+      --border:     #2a2d4a;
+      --accent:     #7c5cfc;
+      --accent2:    #5eead4;
+      --accent3:    #f59e0b;
+      --text:       #e2e8f0;
+      --muted:      #64748b;
+      --success:    #22c55e;
+      --danger:     #ef4444;
+      --warn:       #f59e0b;
+      --radius:     14px;
+      --radius-sm:  8px;
+    }
+
+    html { scroll-behavior: smooth; overflow-x: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    /* ─── Glow background blobs ────────────────────────────── */
+    .bg-blobs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .bg-blobs span {
+      position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.12;
+    }
+    .bg-blobs span:nth-child(1) { width: 600px; height: 600px; background: var(--accent);  top: -200px; left: -200px; }
+    .bg-blobs span:nth-child(2) { width: 400px; height: 400px; background: var(--accent2); bottom: -100px; right: -100px; }
+    .bg-blobs span:nth-child(3) { width: 300px; height: 300px; background: var(--accent3); top: 40%; left: 50%; }
+
+    /* ─── Layout ────────────────────────────────────────────── */
+    .page { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* ─── Header ────────────────────────────────────────────── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      flex-wrap: wrap; gap: 14px;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px; color: #fff; letter-spacing: -1px;
+    }
+    .logo-text h1 { font-size: 18px; font-weight: 700; color: var(--text); }
+    .logo-text p  { font-size: 12px; color: var(--muted); }
+
+    .connect-area { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .network-badge {
+      font-size: 11px; font-weight: 600; padding: 4px 10px;
+      border-radius: 20px; background: rgba(124,92,252,0.15);
+      color: var(--accent); border: 1px solid rgba(124,92,252,0.3);
+    }
+    .wallet-addr {
+      font-size: 12px; font-weight: 600; padding: 6px 14px;
+      border-radius: 20px; background: var(--surface2);
+      color: var(--accent2); border: 1px solid var(--border);
+      font-family: monospace;
+    }
+    .wallet-balance {
+      font-size: 12px; font-weight: 700; padding: 6px 14px;
+      border-radius: 20px; background: rgba(245,158,11,0.12);
+      color: var(--accent3); border: 1px solid rgba(245,158,11,0.3);
+    }
+
+    /* ─── Buttons ───────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      font-size: 14px; font-weight: 600; border: none; cursor: pointer;
+      border-radius: var(--radius-sm); padding: 10px 22px;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #9b7cff);
+      color: #fff; box-shadow: 0 4px 18px rgba(124,92,252,0.35);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(124,92,252,0.5);
+    }
+
+    .btn-teal {
+      background: linear-gradient(135deg, #14b8a6, var(--accent2));
+      color: #0a0b14; box-shadow: 0 4px 14px rgba(94,234,212,0.25);
+    }
+    .btn-teal:hover:not(:disabled) { transform: translateY(-1px); }
+
+    .btn-amber {
+      background: linear-gradient(135deg, var(--accent3), #fb923c);
+      color: #0a0b14; box-shadow: 0 4px 14px rgba(245,158,11,0.25);
+    }
+    .btn-amber:hover:not(:disabled) { transform: translateY(-1px); }
+
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover:not(:disabled) { background: var(--surface2); border-color: var(--accent); }
+
+    .btn-sm { font-size: 12px; padding: 6px 14px; }
+    .btn-full { width: 100%; }
+
+    /* ─── Cards ─────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title svg { width: 16px; height: 16px; }
+
+    /* ─── Stats grid ────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 24px; }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .stat-card.purple::before  { background: linear-gradient(90deg, var(--accent), #9b7cff); }
+    .stat-card.teal::before    { background: linear-gradient(90deg, #14b8a6, var(--accent2)); }
+    .stat-card.amber::before   { background: linear-gradient(90deg, var(--accent3), #fb923c); }
+    .stat-card.green::before   { background: linear-gradient(90deg, var(--success), #4ade80); }
+
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+    .stat-value { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .stat-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ─── Two-col layout ────────────────────────────────────── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    @media(max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ─── Progress bar ──────────────────────────────────────── */
+    .progress-wrap { margin: 14px 0 6px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: var(--muted); }
+    .progress-track {
+      height: 8px; border-radius: 99px; background: var(--surface2); overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.6s ease;
+    }
+
+    /* ─── Eligibility list ──────────────────────────────────── */
+    .check-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .check-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+    .check-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .check-item.pass  { border-color: rgba(34,197,94,0.3);  background: rgba(34,197,94,0.07); }
+    .check-item.fail  { border-color: rgba(239,68,68,0.3);  background: rgba(239,68,68,0.07); }
+    .check-item.wait  { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.07); }
+
+    /* ─── Info rows ─────────────────────────────────────────── */
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-key   { color: var(--muted); }
+    .info-val   { font-weight: 600; font-family: monospace; font-size: 13px; }
+    .info-val.green  { color: var(--success); }
+    .info-val.purple { color: var(--accent); }
+    .info-val.amber  { color: var(--accent3); }
+    .info-val.teal   { color: var(--accent2); }
+
+    /* ─── Countdown ─────────────────────────────────────────── */
+    .countdown {
+      display: flex; gap: 10px; justify-content: center; margin: 16px 0;
+    }
+    .cd-box {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 16px; text-align: center; min-width: 64px;
+    }
+    .cd-num  { font-size: 26px; font-weight: 800; color: var(--accent2); line-height: 1; }
+    .cd-unit { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-top: 3px; font-weight: 600; }
+
+    /* ─── Fund Pool (admin only) ────────────────────────────── */
+    .admin-section {
+      background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(251,146,60,0.06));
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .admin-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+      background: rgba(245,158,11,0.15); color: var(--accent3);
+      border: 1px solid rgba(245,158,11,0.3); border-radius: 20px; padding: 3px 10px; margin-bottom: 14px;
+    }
+
+    .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .input-wrap  { flex: 1; min-width: 180px; }
+    .fund-actions { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+    .input-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; display: block; }
+    .input-field {
+      width: 100%; padding: 10px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 14px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: var(--accent); }
+    .input-field::placeholder { color: var(--muted); }
+
+    /* ─── Toast ─────────────────────────────────────────────── */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px; max-width: 360px;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 14px 18px; border-radius: var(--radius-sm);
+      background: var(--surface); border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      font-size: 13px; line-height: 1.4; color: var(--text);
+      animation: slideIn 0.3s ease;
+    }
+    .toast.success { border-color: rgba(34,197,94,0.4); }
+    .toast.error   { border-color: rgba(239,68,68,0.4); }
+    .toast.info    { border-color: rgba(124,92,252,0.4); }
+    .toast-icon { font-size: 18px; flex-shrink: 0; }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { to { opacity: 0; transform: translateX(120%); } }
+
+    /* ─── Loading spinner ───────────────────────────────────── */
+    .spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Section heading ───────────────────────────────────── */
+    .section-heading {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted);
+      display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    }
+    .section-heading::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ─── Connect prompt ────────────────────────────────────── */
+    .connect-prompt {
+      text-align: center; padding: 60px 24px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .connect-prompt .icon { font-size: 52px; margin-bottom: 16px; }
+    .connect-prompt h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .connect-prompt p  { color: var(--muted); margin-bottom: 24px; }
+
+    /* ─── Misc ──────────────────────────────────────────────── */
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .text-sm  { font-size: 12px; color: var(--muted); }
+    .text-center { text-align: center; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .gap-10 { gap: 10px; }
+    .flex-center { display: flex; align-items: center; justify-content: center; }
+    .hidden { display: none !important; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700; padding: 3px 9px;
+      border-radius: 20px; border: 1px solid;
+    }
+    .pill.green  { background: rgba(34,197,94,0.1);  color: var(--success); border-color: rgba(34,197,94,0.3); }
+    .pill.red    { background: rgba(239,68,68,0.1);  color: var(--danger);  border-color: rgba(239,68,68,0.3); }
+    .pill.purple { background: rgba(124,92,252,0.1); color: var(--accent);  border-color: rgba(124,92,252,0.3); }
+    .pill.amber  { background: rgba(245,158,11,0.1); color: var(--accent3); border-color: rgba(245,158,11,0.3); }
+
+    /* ─── Mobile tweaks ─────────────────────────────────────── */
+    @media(max-width: 480px) {
+      header {
+        flex-direction: column; align-items: stretch; text-align: center;
+        padding: 16px;
+      }
+      .logo, .connect-area { justify-content: center; }
+      .card  { padding: 18px; }
+      .stat-card { padding: 16px; }
+      .admin-section { padding: 16px; }
+      .connect-prompt { padding: 40px 18px; }
+      .stat-value { font-size: 18px; }
+      .countdown { gap: 6px; }
+      .cd-box { min-width: 54px; padding: 8px 10px; }
+      .countdown .cd-num { font-size: 20px; }
+      .fund-actions { width: 100%; }
+      .fund-actions .btn { flex: 1; }
+      #toast-container {
+        left: 12px; right: 12px; bottom: 12px; max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-blobs">
+  <span></span><span></span><span></span>
+</div>
+
+<div id="toast-container"></div>
+
+<div class="page">
+
+  <!-- ─── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">TR</div>
+      <div class="logo-text">
+        <h1>TRANCE DirectReward</h1>
+        <p>v3 — 9-Direct Milestone Reward</p>
+      </div>
+    </div>
+    <div class="connect-area">
+      <span class="network-badge" id="network-badge">BSC</span>
+      <span class="wallet-balance hidden" id="wallet-balance"></span>
+      <span class="wallet-addr hidden" id="wallet-addr"></span>
+      <button class="btn btn-primary btn-sm" id="btn-connect">
+        🔗 Connect Wallet
+      </button>
+      <button class="btn btn-outline btn-sm hidden" id="btn-disconnect">Disconnect</button>
+    </div>
+  </header>
+
+  <!-- ─── NOT CONNECTED ────────────────────────────────────── -->
+  <div id="not-connected">
+    <div class="connect-prompt">
+      <div class="icon">🔐</div>
+      <h2>Connect Your Wallet</h2>
+      <p>Please connect your MetaMask or Web3 wallet to access the TRANCE DirectReward dashboard.</p>
+      <button class="btn btn-primary" id="btn-connect2">🔗 Connect Wallet</button>
+    </div>
+  </div>
+
+  <!-- ─── MAIN DASHBOARD ───────────────────────────────────── -->
+  <div id="dashboard" class="hidden">
+
+    <!-- Protocol Stats -->
+    <div class="section-heading">📊 Protocol Stats</div>
+    <div class="stats-grid">
+      <div class="stat-card purple">
+        <div class="stat-label">Reward Pool</div>
+        <div class="stat-value" id="stat-pool">—</div>
+        <div class="stat-sub">KAVI locked in contract</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label">KAVI per $100</div>
+        <div class="stat-value" id="stat-kavi100">—</div>
+        <div class="stat-sub">Live DEX price</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">KAVI per $210</div>
+        <div class="stat-value" id="stat-kavi210">—</div>
+        <div class="stat-sub">Min deposit threshold</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Total Reward Users</div>
+        <div class="stat-value" id="stat-users">—</div>
+        <div class="stat-sub">Unique unlocks ever</div>
+      </div>
+    </div>
+
+    <!-- Additional global stats -->
+    <div class="two-col" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-title">💸 Total Unlocked</div>
+        <div class="info-row">
+          <span class="info-key">All-time unlocked</span>
+          <span class="info-val purple" id="stat-total-unlocked">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">All-time paid out</span>
+          <span class="info-val teal" id="stat-total-paid">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Daily rate</span>
+          <span class="info-val amber">0.33% / day</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Full payout duration</span>
+          <span class="info-val">~303 days</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Contract Info</div>
+        <div class="info-row">
+          <span class="info-key">Contract</span>
+          <span class="info-val" style="font-size:11px;color:var(--accent2)">0xC0DC...90b52</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Required directs</span>
+          <span class="info-val">9</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Min deposit</span>
+          <span class="info-val">$210 in KAVI</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Reward value</span>
+          <span class="info-val">$100 in KAVI</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── YOUR REWARD STATUS ────────────────────────────── -->
+    <div class="section-heading">🎁 Your Reward</div>
+    <div class="two-col">
+
+      <!-- Eligibility & Unlock -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+          </svg>
+          Eligibility Check
+        </div>
+
+        <ul class="check-list" id="eligibility-list">
+          <li class="check-item wait"><span class="check-icon">⏳</span><span>Loading eligibility…</span></li>
+        </ul>
+
+        <div class="mt-16">
+          <button class="btn btn-primary btn-full" id="btn-unlock" disabled>
+            🔓 Unlock $100 Reward
+          </button>
+        </div>
+
+        <div class="text-sm mt-12 text-center" id="unlock-status"></div>
+      </div>
+
+      <!-- Claim Panel -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Daily Claim
+        </div>
+
+        <!-- Reward not unlocked state -->
+        <div id="claim-not-unlocked">
+          <div style="text-align:center; padding: 24px 0; color: var(--muted);">
+            <div style="font-size:36px;margin-bottom:10px;">🔒</div>
+            <p style="font-size:13px;">Unlock your reward first to start daily claims.</p>
+          </div>
+        </div>
+
+        <!-- Reward unlocked state -->
+        <div id="claim-panel" class="hidden">
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span>Claimed Progress</span>
+              <span id="prog-pct">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <span class="info-key">Total Reward</span>
+            <span class="info-val purple" id="rw-total">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Claimed</span>
+            <span class="info-val teal" id="rw-claimed">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Remaining</span>
+            <span class="info-val amber" id="rw-remaining">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Daily Amount</span>
+            <span class="info-val green" id="rw-daily">—</span>
+          </div>
+
+          <!-- Countdown -->
+          <div id="claim-ready-wrap" class="hidden">
+            <div class="divider"></div>
+            <div style="text-align:center; margin-bottom: 8px;">
+              <span class="pill green">✅ Claim Ready!</span>
+            </div>
+            <button class="btn btn-teal btn-full" id="btn-claim">💎 Claim Daily Reward</button>
+          </div>
+
+          <div id="claim-countdown-wrap" class="hidden">
+            <div class="divider"></div>
+            <div class="text-sm text-center" style="margin-bottom:8px;color:var(--muted);">Next claim in:</div>
+            <div class="countdown">
+              <div class="cd-box"><div class="cd-num" id="cd-h">00</div><div class="cd-unit">hrs</div></div>
+              <div class="cd-box"><div class="cd-num" id="cd-m">00</div><div class="cd-unit">min</div></div>
+              <div class="cd-box"><div class="cd-num" id="cd-s">00</div><div class="cd-unit">sec</div></div>
+            </div>
+            <button class="btn btn-outline btn-full" disabled>⏳ Waiting for next claim</button>
+          </div>
+
+          <div id="fully-drained-wrap" class="hidden" style="text-align:center; padding:16px 0;">
+            <div style="font-size:36px;margin-bottom:8px;">🏆</div>
+            <span class="pill green">Fully Claimed!</span>
+            <p class="text-sm mt-12">You've claimed your entire $100 KAVI reward. Congratulations!</p>
+          </div>
+
+          <div class="text-sm mt-12 text-center" id="claim-status"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TRANCE STATS (from main contract) ────────────── -->
+    <div class="section-heading mt-16">👤 Your TRANCE Account</div>
+    <div class="card">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:16px;">
+        <div>
+          <div class="stat-label">Status</div>
+          <div id="trance-registered" class="pill red" style="margin-top:6px;">Not Registered</div>
+        </div>
+        <div>
+          <div class="stat-label">Your Deposit</div>
+          <div class="info-val amber mt-12" id="trance-deposit">—</div>
+        </div>
+        <div>
+          <div class="stat-label">Direct Qualified</div>
+          <div class="info-val purple mt-12" id="trance-directs">—</div>
+        </div>
+        <div>
+          <div class="stat-label">2x Cap Status</div>
+          <div id="trance-capped" class="pill green" style="margin-top:6px;">Not Capped</div>
+        </div>
+        <div>
+          <div class="stat-label">Referrer</div>
+          <div class="info-val teal mt-12" style="font-size:11px;" id="trance-referrer">—</div>
+        </div>
+        <div>
+          <div class="stat-label">TRANCE Claimed</div>
+          <div class="info-val green mt-12" id="trance-claimed">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── FUND REWARD POOL (shown only to the configured wallet) ─── -->
+    <div id="admin-section" class="admin-section hidden">
+      <div class="admin-badge">🔑 Admin Panel</div>
+      <div class="section-heading">Fund Reward Pool</div>
+      <p class="text-sm" style="margin-bottom:16px;">
+        Add KAVI to the reward pool. Funds are permanently locked — they can only be claimed by eligible users as daily rewards.
+      </p>
+      <div class="info-row" style="border-bottom:none; padding-top:0; padding-bottom:12px;">
+        <span class="info-key">Your KAVI Balance</span>
+        <span class="info-val amber" id="fund-wallet-balance">—</span>
+      </div>
+      <div class="input-group">
+        <div class="input-wrap">
+          <label class="input-label" for="fund-amount">KAVI Amount</label>
+          <input class="input-field" id="fund-amount" type="number" placeholder="e.g. 10000" min="0" step="any" />
+        </div>
+        <div class="fund-actions">
+          <button class="btn btn-outline btn-sm" id="btn-approve-fund">① Approve</button>
+          <button class="btn btn-amber" id="btn-fund-pool">② Fund Pool</button>
+        </div>
+      </div>
+      <div class="text-sm mt-12" id="fund-status" style="color:var(--muted);"></div>
+    </div>
+
+    <!-- Refresh -->
+    <div class="text-center mt-16">
+      <button class="btn btn-outline btn-sm" id="btn-refresh">🔄 Refresh Data</button>
+    </div>
+
+  </div><!-- /dashboard -->
+</div><!-- /page -->
+
+<!-- ─── ethers.js v5 via CDN ─────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   CONFIG
+════════════════════════════════════════════════════════════ */
+const CONTRACT_ADDRESS  = "0xC0DC90ED3d37dEa9A580bF70Cb84713d5ed90b52";
+// NOTE: On-chain, this contract has NO owner/admin — fundPool() is technically
+// callable by anyone directly on the contract. This ADMIN_ADDRESS only controls
+// whether the Fund Pool panel is *shown in this UI* — it is not an on-chain restriction.
+const ADMIN_ADDRESS = "0xd456446E6b6b75f1f5D3437AE8350fd43124F104";
+
+// Minimal ABIs — only functions we call
+const REWARD_ABI = [
+  // View
+  "function rewardPool() view returns (uint256)",
+  "function totalUnlocked() view returns (uint256)",
+  "function totalPaidOut() view returns (uint256)",
+  "function totalRewardUsers() view returns (uint256)",
+  "function rewardInfo(address) view returns (uint256 rewardAmount, uint256 claimed, uint256 lastClaim, bool unlocked)",
+  "function pendingDailyReward(address) view returns (uint256)",
+  "function rewardStatus(address) view returns (bool unlocked, uint256 totalReward, uint256 claimedSoFar, uint256 remainingReward, uint256 dailyAmount, uint256 nextClaimAt, bool fullyDrained)",
+  "function checkEligibility(address) view returns (bool eligible, string reason)",
+  "function priceInfo() view returns (uint256 kaviFor100USD, uint256 kaviFor210USD, uint256 poolBalance)",
+  "function token() view returns (address)",
+  "function tranceContract() view returns (address)",
+  // Write
+  "function unlockReward()",
+  "function claimDailyReward()",
+  "function fundPool(uint256 amount)",
+];
+
+const ERC20_ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+];
+
+const TRANCE_ABI = [
+  "function users(address) view returns (bool registered, uint256 deposit, uint256 claimed, uint256 lastClaim, address referrer, uint256 directQualified, bool countedDirect, bool capped)",
+];
+
+/* ════════════════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════════════════ */
+let provider, signer, userAddress;
+let rewardContract, tokenContract, tranceContractInst;
+let countdownInterval;
+
+/* ════════════════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════════════════ */
+const fmt = (bn, dec = 18, digits = 2) =>
+  parseFloat(ethers.utils.formatUnits(bn, dec)).toLocaleString('en-US', { maximumFractionDigits: digits });
+
+const shortAddr = a => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
+
+function toast(msg, type = 'info', duration = 5000) {
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'fadeOut 0.4s ease forwards';
+    setTimeout(() => el.remove(), 400);
+  }, duration);
+}
+
+function setBtn(id, loading, text) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading ? `<span class="spinner"></span> ${text}` : text;
+}
+
+/* ════════════════════════════════════════════════════════════
+   WALLET CONNECTION
+════════════════════════════════════════════════════════════ */
+async function connectWallet() {
+  if (!window.ethereum) {
+    toast('MetaMask not detected. Please install it.', 'error');
+    return;
+  }
+  try {
+    setBtn('btn-connect', true, 'Connecting…');
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    signer   = provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    await setupContracts();
+    updateHeaderUI();
+    showDashboard();
+    await loadAllData();
+
+    window.ethereum.on('accountsChanged', handleAccountChange);
+    window.ethereum.on('chainChanged',    () => window.location.reload());
+  } catch (e) {
+    toast(e.message || 'Connection failed', 'error');
+  } finally {
+    setBtn('btn-connect', false, '🔗 Connect Wallet');
+  }
+}
+
+async function setupContracts() {
+  rewardContract = new ethers.Contract(CONTRACT_ADDRESS, REWARD_ABI, signer);
+
+  const tokenAddr  = await rewardContract.token();
+  const tranceAddr = await rewardContract.tranceContract();
+
+  tokenContract       = new ethers.Contract(tokenAddr,  ERC20_ABI,   signer);
+  tranceContractInst  = new ethers.Contract(tranceAddr, TRANCE_ABI,  provider);
+}
+
+async function handleAccountChange(accounts) {
+  if (accounts.length === 0) disconnectWallet();
+  else { userAddress = accounts[0]; await loadAllData(); updateHeaderUI(); }
+}
+
+function disconnectWallet() {
+  provider = signer = userAddress = null;
+  rewardContract = tokenContract = tranceContractInst = null;
+  clearInterval(countdownInterval);
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('not-connected').classList.remove('hidden');
+  document.getElementById('wallet-addr').classList.add('hidden');
+  document.getElementById('wallet-balance').classList.add('hidden');
+  document.getElementById('btn-disconnect').classList.add('hidden');
+  document.getElementById('btn-connect').classList.remove('hidden');
+}
+
+function updateHeaderUI() {
+  document.getElementById('wallet-addr').textContent = shortAddr(userAddress);
+  document.getElementById('wallet-addr').classList.remove('hidden');
+  document.getElementById('btn-disconnect').classList.remove('hidden');
+  document.getElementById('btn-connect').classList.add('hidden');
+
+  // Show Fund Pool section only to the configured wallet (UI-level only)
+  const isAdmin = userAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase();
+  document.getElementById('admin-section').classList.toggle('hidden', !isAdmin);
+}
+
+function showDashboard() {
+  document.getElementById('not-connected').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+}
+
+/* ════════════════════════════════════════════════════════════
+   LOAD ALL DATA
+════════════════════════════════════════════════════════════ */
+async function loadAllData() {
+  if (!userAddress) return;
+  try {
+    await Promise.all([
+      loadGlobalStats(),
+      loadUserRewardStatus(),
+      loadEligibility(),
+      loadTranceData(),
+      loadWalletBalance(),
+    ]);
+  } catch (e) {
+    console.error('Data load error:', e);
+    toast('Error loading data. Check console.', 'error');
+  }
+}
+
+async function loadWalletBalance() {
+  const balance = await tokenContract.balanceOf(userAddress);
+  const text = `${fmt(balance)} KAVI`;
+
+  const headerEl = document.getElementById('wallet-balance');
+  headerEl.textContent = text;
+  headerEl.classList.remove('hidden');
+
+  const fundEl = document.getElementById('fund-wallet-balance');
+  if (fundEl) fundEl.textContent = text;
+}
+
+async function loadGlobalStats() {
+  const [pool, unlocked, paid, users, price] = await Promise.all([
+    rewardContract.rewardPool(),
+    rewardContract.totalUnlocked(),
+    rewardContract.totalPaidOut(),
+    rewardContract.totalRewardUsers(),
+    rewardContract.priceInfo(),
+  ]);
+
+  document.getElementById('stat-pool').textContent        = `${fmt(pool)} KAVI`;
+  document.getElementById('stat-kavi100').textContent     = `${fmt(price.kaviFor100USD)} KAVI`;
+  document.getElementById('stat-kavi210').textContent     = `${fmt(price.kaviFor210USD)} KAVI`;
+  document.getElementById('stat-users').textContent       = users.toString();
+  document.getElementById('stat-total-unlocked').textContent = `${fmt(unlocked)} KAVI`;
+  document.getElementById('stat-total-paid').textContent     = `${fmt(paid)} KAVI`;
+}
+
+async function loadUserRewardStatus() {
+  const status = await rewardContract.rewardStatus(userAddress);
+  const {
+    unlocked, totalReward, claimedSoFar,
+    remainingReward, dailyAmount, nextClaimAt, fullyDrained
+  } = status;
+
+  if (!unlocked) {
+    document.getElementById('claim-not-unlocked').classList.remove('hidden');
+    document.getElementById('claim-panel').classList.add('hidden');
+    document.getElementById('btn-unlock').disabled = false; // will be re-evaluated by eligibility
+    return;
+  }
+
+  document.getElementById('claim-not-unlocked').classList.add('hidden');
+  document.getElementById('claim-panel').classList.remove('hidden');
+
+  // Progress
+  const pct = totalReward.gt(0)
+    ? Math.min(100, Math.floor(claimedSoFar.mul(100).div(totalReward).toNumber()))
+    : 0;
+  document.getElementById('progress-fill').style.width = `${pct}%`;
+  document.getElementById('prog-pct').textContent      = `${pct}%`;
+
+  // Info rows
+  document.getElementById('rw-total').textContent     = `${fmt(totalReward)} KAVI`;
+  document.getElementById('rw-claimed').textContent   = `${fmt(claimedSoFar)} KAVI`;
+  document.getElementById('rw-remaining').textContent = `${fmt(remainingReward)} KAVI`;
+  document.getElementById('rw-daily').textContent     = `${fmt(dailyAmount)} KAVI`;
+
+  // States
+  const fully  = document.getElementById('fully-drained-wrap');
+  const ready  = document.getElementById('claim-ready-wrap');
+  const cdown  = document.getElementById('claim-countdown-wrap');
+  fully.classList.add('hidden');
+  ready.classList.add('hidden');
+  cdown.classList.add('hidden');
+
+  if (fullyDrained) {
+    fully.classList.remove('hidden');
+    return;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const next = nextClaimAt.toNumber();
+
+  if (now >= next) {
+    ready.classList.remove('hidden');
+  } else {
+    cdown.classList.remove('hidden');
+    startCountdown(next);
+  }
+}
+
+function startCountdown(nextClaimAt) {
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    const diff = nextClaimAt - Math.floor(Date.now() / 1000);
+    if (diff <= 0) {
+      clearInterval(countdownInterval);
+      loadUserRewardStatus();
+      return;
+    }
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    const s = diff % 60;
+    document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+    document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+    document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+  }, 1000);
+}
+
+const REQUIRED_DIRECTS = 9; // mirrors contract's REQUIRED_DIRECTS constant
+
+async function loadEligibility() {
+  const [rInfo, uInfo, price] = await Promise.all([
+    rewardContract.rewardInfo(userAddress),
+    tranceContractInst.users(userAddress),
+    rewardContract.priceInfo(),
+  ]);
+
+  const list = document.getElementById('eligibility-list');
+  const btnUnlock = document.getElementById('btn-unlock');
+
+  if (rInfo.unlocked) {
+    list.innerHTML = `
+      <li class="check-item pass">
+        <span class="check-icon">✅</span>
+        <span>Reward already unlocked — check Daily Claim panel.</span>
+      </li>`;
+    btnUnlock.disabled = true;
+    btnUnlock.innerHTML = '✅ Already Unlocked';
+    return;
+  }
+
+  // Every check is evaluated independently — not just the first one the contract would revert on
+  const checks = buildChecklist(uInfo, price);
+  list.innerHTML = checks.map(c => `
+    <li class="check-item ${c.pass ? 'pass' : 'fail'}">
+      <span class="check-icon">${c.pass ? '✅' : '❌'}</span>
+      <span>${c.label}</span>
+    </li>`).join('');
+
+  const eligible = checks.every(c => c.pass);
+  btnUnlock.disabled = !eligible;
+  btnUnlock.innerHTML = eligible ? '🔓 Unlock $100 Reward' : '🔒 Not Eligible Yet';
+}
+
+function buildChecklist(uInfo, price) {
+  const { registered, deposit, directQualified, capped } = uInfo;
+  const { kaviFor210USD, kaviFor100USD, poolBalance } = price;
+
+  const hasDeposit    = deposit.gt(0);
+  const depositEnough = deposit.gte(kaviFor210USD);
+  const directsEnough = directQualified.gte(REQUIRED_DIRECTS);
+  const poolEnough     = poolBalance.gte(kaviFor100USD);
+
+  return [
+    {
+      pass: registered,
+      label: registered ? 'Wallet registered in TRANCE' : 'Wallet not registered in TRANCE',
+    },
+    {
+      pass: hasDeposit,
+      label: hasDeposit ? 'Active deposit present' : 'No active TRANCE deposit',
+    },
+    {
+      pass: depositEnough,
+      label: depositEnough
+        ? `Deposit ≥ $210 worth of KAVI (have ~${fmt(deposit)} KAVI)`
+        : depositShortfallLabel(deposit, kaviFor210USD),
+    },
+    {
+      pass: directsEnough,
+      label: directsEnough
+        ? `9 direct qualified referrals (have ${directQualified.toString()}/9)`
+        : `Need ${REQUIRED_DIRECTS - directQualified.toNumber()} more direct referral(s) (have ${directQualified.toString()}/9)`,
+    },
+    {
+      pass: !capped,
+      label: capped ? 'Currently 2x cycle capped in TRANCE' : 'Not 2x cycle capped',
+    },
+    {
+      pass: poolEnough,
+      label: poolEnough ? 'Reward pool has sufficient KAVI' : 'Reward pool is currently insufficient',
+    },
+  ];
+}
+
+// Appends "how much more KAVI is needed" under the base requirement text
+function depositShortfallLabel(deposit, requiredDeposit) {
+  const base = `Deposit too low — need $210 worth of KAVI (~${fmt(requiredDeposit)} KAVI)`;
+  const remainingBn = requiredDeposit.gt(deposit)
+    ? requiredDeposit.sub(deposit)
+    : ethers.BigNumber.from(0);
+
+  if (remainingBn.lte(0)) return base;
+
+  const remaining = fmt(remainingBn);
+  return `${base}<br><strong style="color:var(--accent3)">➕ Deposit ~${remaining} more KAVI to qualify</strong>`;
+}
+
+async function loadTranceData() {
+  const u = await tranceContractInst.users(userAddress);
+  const { registered, deposit, claimed, referrer, directQualified, capped } = u;
+
+  const regEl   = document.getElementById('trance-registered');
+  const capEl   = document.getElementById('trance-capped');
+
+  regEl.textContent = registered ? 'Registered' : 'Not Registered';
+  regEl.className   = `pill ${registered ? 'green' : 'red'}`;
+
+  document.getElementById('trance-deposit').textContent   = `${fmt(deposit)} KAVI`;
+  document.getElementById('trance-directs').textContent   = `${directQualified.toString()} / 9`;
+  document.getElementById('trance-claimed').textContent   = `${fmt(claimed)} KAVI`;
+  document.getElementById('trance-referrer').textContent  = shortAddr(referrer);
+
+  capEl.textContent = capped ? '⚠️ Capped' : 'Active';
+  capEl.className   = `pill ${capped ? 'amber' : 'green'}`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   UNLOCK REWARD
+════════════════════════════════════════════════════════════ */
+async function unlockReward() {
+  try {
+    setBtn('btn-unlock', true, 'Unlocking…');
+    document.getElementById('unlock-status').textContent = '';
+
+    const tx = await rewardContract.unlockReward();
+    document.getElementById('unlock-status').textContent = '⏳ Waiting for confirmation…';
+    toast('Transaction submitted — waiting for confirmation…', 'info');
+
+    await tx.wait();
+    toast('🎉 Reward unlocked successfully!', 'success');
+    document.getElementById('unlock-status').textContent = '✅ Reward unlocked!';
+    await loadAllData();
+  } catch (e) {
+    const msg = parseError(e);
+    toast(msg, 'error');
+    document.getElementById('unlock-status').textContent = `❌ ${msg}`;
+  } finally {
+    setBtn('btn-unlock', false, '🔓 Unlock $100 Reward');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   CLAIM DAILY REWARD
+════════════════════════════════════════════════════════════ */
+async function claimDailyReward() {
+  try {
+    setBtn('btn-claim', true, 'Claiming…');
+    document.getElementById('claim-status').textContent = '';
+
+    const tx = await rewardContract.claimDailyReward();
+    document.getElementById('claim-status').textContent = '⏳ Waiting for confirmation…';
+    toast('Claim transaction submitted…', 'info');
+
+    const receipt = await tx.wait();
+    toast('💎 Daily reward claimed!', 'success');
+    document.getElementById('claim-status').textContent = '✅ Claimed successfully!';
+    await loadAllData();
+  } catch (e) {
+    const msg = parseError(e);
+    toast(msg, 'error');
+    document.getElementById('claim-status').textContent = `❌ ${msg}`;
+  } finally {
+    setBtn('btn-claim', false, '💎 Claim Daily Reward');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   FUND POOL (admin only)
+════════════════════════════════════════════════════════════ */
+async function approveForFund() {
+  const raw = document.getElementById('fund-amount').value;
+  if (!raw || isNaN(raw) || Number(raw) <= 0) {
+    toast('Enter a valid KAVI amount.', 'error'); return;
+  }
+  try {
+    setBtn('btn-approve-fund', true, 'Approving…');
+    document.getElementById('fund-status').textContent = '';
+    const amount = ethers.utils.parseEther(raw);
+    const tx = await tokenContract.approve(CONTRACT_ADDRESS, amount);
+    document.getElementById('fund-status').textContent = '⏳ Approval pending…';
+    await tx.wait();
+    toast('KAVI approval confirmed.', 'success');
+    document.getElementById('fund-status').textContent = '✅ Approved. Now click Fund Pool.';
+  } catch (e) {
+    const msg = parseError(e);
+    toast(msg, 'error');
+    document.getElementById('fund-status').textContent = `❌ ${msg}`;
+  } finally {
+    setBtn('btn-approve-fund', false, '① Approve');
+  }
+}
+
+async function fundPool() {
+  const raw = document.getElementById('fund-amount').value;
+  if (!raw || isNaN(raw) || Number(raw) <= 0) {
+    toast('Enter a valid KAVI amount.', 'error'); return;
+  }
+  try {
+    setBtn('btn-fund-pool', true, 'Funding…');
+    document.getElementById('fund-status').textContent = '';
+    const amount = ethers.utils.parseEther(raw);
+
+    // Check allowance first
+    const allowance = await tokenContract.allowance(userAddress, CONTRACT_ADDRESS);
+    if (allowance.lt(amount)) {
+      toast('Please approve KAVI first.', 'error');
+      document.getElementById('fund-status').textContent = '❌ Insufficient allowance. Click Approve first.';
+      return;
+    }
+
+    const tx = await rewardContract.fundPool(amount);
+    document.getElementById('fund-status').textContent = '⏳ Funding pending…';
+    await tx.wait();
+    toast(`✅ Pool funded with ${raw} KAVI!`, 'success');
+    document.getElementById('fund-status').textContent = '✅ Pool funded successfully!';
+    document.getElementById('fund-amount').value = '';
+    await loadGlobalStats();
+  } catch (e) {
+    const msg = parseError(e);
+    toast(msg, 'error');
+    document.getElementById('fund-status').textContent = `❌ ${msg}`;
+  } finally {
+    setBtn('btn-fund-pool', false, '② Fund Pool');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ERROR PARSING
+════════════════════════════════════════════════════════════ */
+function parseError(e) {
+  if (e?.code === 4001 || e?.code === 'ACTION_REJECTED') return 'Transaction rejected by user.';
+  const msg = e?.reason || e?.data?.message || e?.message || 'Unknown error';
+  const map = {
+    'AlreadyUnlocked'  : 'Reward already unlocked.',
+    'NotEligible'      : 'Not enough direct referrals (need 9).',
+    'NoRewardUnlocked' : 'Unlock reward first.',
+    'Wait24h'          : 'You must wait 24h between claims.',
+    'NoActiveDeposit'  : 'No active deposit in TRANCE.',
+    'UserCapped'       : 'Your TRANCE account is 2x capped.',
+    'DepositTooLow'    : 'Deposit below $210 minimum.',
+    'NotEnoughPool'    : 'Reward pool is insufficient.',
+    'ZeroAddress'      : 'Zero address not allowed.',
+  };
+  for (const [key, val] of Object.entries(map)) {
+    if (msg.includes(key)) return val;
+  }
+  return msg.length > 120 ? msg.slice(0, 120) + '…' : msg;
+}
+
+/* ════════════════════════════════════════════════════════════
+   EVENT LISTENERS
+════════════════════════════════════════════════════════════ */
+document.getElementById('btn-connect').addEventListener('click', connectWallet);
+document.getElementById('btn-connect2').addEventListener('click', connectWallet);
+document.getElementById('btn-disconnect').addEventListener('click', disconnectWallet);
+document.getElementById('btn-unlock').addEventListener('click', unlockReward);
+document.getElementById('btn-claim').addEventListener('click', claimDailyReward);
+document.getElementById('btn-approve-fund').addEventListener('click', approveForFund);
+document.getElementById('btn-fund-pool').addEventListener('click', fundPool);
+document.getElementById('btn-refresh').addEventListener('click', async () => {
+  toast('Refreshing data…', 'info', 2000);
+  await loadAllData();
+});
+
+// Auto-connect if already authorized
+window.addEventListener('load', async () => {
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer   = provider.getSigner();
+        userAddress = accounts[0];
+        await setupContracts();
+        updateHeaderUI();
+        showDashboard();
+        await loadAllData();
+        window.ethereum.on('accountsChanged', handleAccountChange);
+        window.ethereum.on('chainChanged',    () => window.location.reload());
+      }
+    } catch {}
+  }
+});
+</script>
+</body>
+</html>
